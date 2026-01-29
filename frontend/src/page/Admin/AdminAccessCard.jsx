@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const AdminRequests = () => {
+const AdminAccessCard = () => {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [pageSize, setPageSize] = useState(10);
@@ -10,14 +10,60 @@ const AdminRequests = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('visitorName');
   const [statusFilter, setStatusFilter] = useState("");
+  const [issueStatusFilter, setIssueStatusFilter] = useState(""); // 발급구분 필터
+  const [issueStatusMap, setIssueStatusMap] = useState({}); // { reqId: "반납완료" | "발급중" }
+
+  // 발급 상태 조회 함수
+  const fetchIssueStatus = async (reqId) => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/request/visitors/${reqId}`);
+      if (response.data.success && Array.isArray(response.data.data)) {
+        const visitors = response.data.data;
+        // 방문자가 없으면 "발급중"
+        if (visitors.length === 0) {
+          return "발급중";
+        }
+        // 모든 방문자의 accessCardIssueStat이 'R' 또는 'P'인지 확인
+        const allReturnedOrNoIssue = visitors.every(visitor => 
+          visitor.accessCardIssueStat === 'R' || visitor.accessCardIssueStat === 'P'
+        );
+        return allReturnedOrNoIssue ? "반납완료" : "발급중";
+      }
+      return "발급중";
+    } catch (error) {
+      console.error(`발급 상태 조회 실패 (reqId: ${reqId}):`, error);
+      return "발급중";
+    }
+  };
 
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         const response = await axios.get('http://localhost:3001/api/request');
-        setRequests(response.data);
+        // response.data가 배열인지 확인
+        const data = Array.isArray(response.data) ? response.data : [];
+        setRequests(data);
+        
+        // 각 request의 발급 상태 조회
+        const statusPromises = data.map(async (request) => {
+          if (request.reqId) {
+            const status = await fetchIssueStatus(request.reqId);
+            return { reqId: request.reqId, status };
+          }
+          return null;
+        });
+        
+        const statusResults = await Promise.all(statusPromises);
+        const statusMap = {};
+        statusResults.forEach(result => {
+          if (result) {
+            statusMap[result.reqId] = result.status;
+          }
+        });
+        setIssueStatusMap(statusMap);
       } catch (error) {
         console.error("방문요청 가져오기 실패: ", error);
+        setRequests([]); // 에러 발생 시 빈 배열로 설정
       }
     };
     fetchRequests();
@@ -28,26 +74,16 @@ const AdminRequests = () => {
       const fieldValue = request[searchType];
       const value = (fieldValue || "").toLowerCase();
       const matchesSearch = value.includes(searchTerm.toLowerCase());
-      
-      let matchesStatus = true;
-      if (statusFilter !== "") {
-        if (statusFilter === "cancel_reject") {
-          // 취소/반려: 3 또는 6
-          matchesStatus = String(request.status) === "3" || String(request.status) === "6";
-        } else if (statusFilter === "in_progress") {
-          // 진행중: 1, 2, 4, 5
-          matchesStatus = String(request.status) === "1" || 
-                         String(request.status) === "2" || 
-                         String(request.status) === "4" || 
-                         String(request.status) === "5";
-        } else {
-          matchesStatus = String(request.status) === statusFilter;
-        }
-      }
-      
-      return matchesSearch && matchesStatus;
+      const matchesStatus =
+        statusFilter === "" || String(request.status) === statusFilter;
+      const issueStatus = issueStatusMap[request.reqId] || "발급중";
+      const matchesIssueStatus = 
+        issueStatusFilter === "" || 
+        (issueStatusFilter === "발급완료" && issueStatus === "반납완료") ||
+        (issueStatusFilter === "발급중" && issueStatus === "발급중");
+      return matchesSearch && matchesStatus && matchesIssueStatus;
     });
-  }, [requests, searchTerm, searchType, statusFilter]);
+  }, [requests, searchTerm, searchType, statusFilter, issueStatusFilter, issueStatusMap]);
 
   const totalPages = pageSize > 0 ? Math.ceil(filteredRequests.length / pageSize) : 1;
   const paginatedRequests = useMemo(() => {
@@ -58,7 +94,7 @@ const AdminRequests = () => {
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto py-16 md:py-32">
       <h1 className="text-4xl md:text-5xl font-bold mb-6 md:mb-8 text-center">
-        방문요청 관리
+        입/출입 관리
       </h1>
 
       <div className="mb-4 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -82,23 +118,14 @@ const AdminRequests = () => {
           </div>
           <select
             className="border rounded px-3 py-2 text-base"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={issueStatusFilter}
+            onChange={(e) => setIssueStatusFilter(e.target.value)}
           >
-            <option value="">상태</option>
-            <option value="0">대기중</option>
-            <option value="in_progress">진행중</option>
-            <option value="9">결재완료</option>
-            <option value="cancel_reject">취소/반려</option>
+            <option value="">발급구분</option>
+            <option value="발급중">발급중</option>
+            <option value="발급완료">발급완료</option>
           </select>
         </div>
-
-        <button
-          onClick={() => navigate("/admin/create-request")}
-          className="w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-center"
-        >
-          추가하기
-        </button>
       </div>
 
       <div className="mb-4 flex justify-between items-center">
@@ -128,7 +155,10 @@ const AdminRequests = () => {
                 번호
               </th>
               <th className="px-4 py-3 text-left text-sm font-midium text-gray-500 uppercase tracking-wider w-[10%]">
-                구분
+                발급구분
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-midium text-gray-500 uppercase tracking-wider w-[10%]">
+                결재상태
               </th>
               <th className="px-4 py-3 text-left text-sm font-midium text-gray-500 uppercase tracking-wider w-[10%]">
                 방문자정보
@@ -136,8 +166,8 @@ const AdminRequests = () => {
               <th className="px-4 py-3 text-left text-sm font-midium text-gray-500 uppercase tracking-wider w-auto">
                 내부 담당자 / 방문장소
               </th>
-              <th className="px-4 py-3 text-left text-sm font-midium text-gray-500 uppercase tracking-wider w-[15%]">
-                방문시작 / 방문종료
+              <th className="px-4 py-3 text-left text-sm font-midium text-gray-500 uppercase tracking-wider w-[8%]">
+                등록일자
               </th>
             </tr>
           </thead>
@@ -151,36 +181,26 @@ const AdminRequests = () => {
                 <tr
                   key={request.reqId}
                   className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => navigate(`/admin/detail-request/${request.reqId}`)}
+                  onClick={() => navigate(`/admin/detail-accessCard/${request.reqId}`)}
                 >
                   <td className="px-4 py-3">
                     <>#{(currentPage - 1) * pageSize + index + 1}</>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`mx-3 px-2 py-1 rounded-full text-base ${request.status === "0"
-                        ? "bg-blue-100 text-blue-800"
-                        : request.status === "3"
+                      className={`mx-3 px-2 py-1 rounded-full text-base ${
+                        (issueStatusMap[request.reqId] || "발급중") === "반납완료"
                           ? "bg-red-100 text-red-800"
-                          : request.status === "6"
-                            ? "bg-red-100 text-red-800"
-                            : request.status === "9"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                        }`}
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
                     >
-                      {request.codeName}
+                      {issueStatusMap[request.reqId] || "발급중"}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">{request.codeName}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{request.visitorName} / {request.visitorCompany}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{request.internalContact} / {request.location}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {request.visitDateFrom && request.visitDateTo 
-                      ? `${request.visitDateFrom} / ${request.visitDateTo}`
-                      : request.visitDateFrom 
-                        ? request.visitDateFrom
-                        : '-'}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">{new Date(request.createdAt).toISOString().split('T')[0]}</td>
                 </tr>
               ))
             )}
@@ -198,34 +218,24 @@ const AdminRequests = () => {
             <div
               key={request.reqId}
               className="p-4 rounded-lg bg-white shadow-md cursor-pointer hover:bg-gray-50"
-              onClick={() => navigate(`/admin/detail-request/${request.reqId}`)}
+              onClick={() => navigate(`/admin/detail-accessCard/${request.reqId}`)}
             >
               <div className="text-lg font-bold">
                 <>#{(currentPage - 1) * pageSize + index + 1}</>
                 <span
-                  className={`mx-3 px-2 py-1 rounded-full text-base ${request.status === "0"
-                    ? "bg-blue-100 text-blue-800"
-                    : request.status === "3"
+                  className={`mx-3 px-2 py-1 rounded-full text-base ${
+                    (issueStatusMap[request.reqId] || "발급중") === "반납완료"
                       ? "bg-red-100 text-red-800"
-                      : request.status === "6"
-                        ? "bg-red-100 text-red-800"
-                        : request.status === "9"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                    }`}
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
                 >
-                  구분: [{request.codeName}]
+                  발급구분: [{issueStatusMap[request.reqId] || "발급중"}]
                 </span>
               </div>
+              <div className="text-gray-600">결재상태: {request.codeName}</div>
               <div className="text-gray-600">방문자정보: {request.visitorName} / {request.visitorCompany}</div>
               <div className="text-gray-600">내부 담당자 / 방문장소: {request.internalContact} / {request.location}</div>
-              <div className="text-gray-600">
-                방문시작 / 방문종료: {request.visitDateFrom && request.visitDateTo 
-                  ? `${request.visitDateFrom} / ${request.visitDateTo}`
-                  : request.visitDateFrom 
-                    ? request.visitDateFrom
-                    : '-'}
-              </div>
+              <div className="text-gray-600">등록일자: {new Date(request.createdAt).toISOString().split('T')[0]}</div>
             </div>
           ))
         )}
@@ -255,4 +265,4 @@ const AdminRequests = () => {
   );
 };
 
-export default AdminRequests;
+export default AdminAccessCard;

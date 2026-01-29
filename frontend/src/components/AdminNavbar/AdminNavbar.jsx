@@ -48,7 +48,25 @@ const AdminNavbar = () => {
               className="hover:bg-gray-700 px-3 py-2 rounded"
             >
               문의 관리
-            </Link>
+              </Link>
+              <Link
+                to="/admin/accessCard"
+                className="hover:bg-gray-700 px-3 py-2 rounded"
+              >
+                입/출입 관리
+              </Link>
+              <Link
+                to="/admin/cardManagement"
+                className="hover:bg-gray-700 px-3 py-2 rounded"
+              >
+                출입카드 관리
+              </Link>
+              <Link
+                to="/admin/statistics"
+                className="hover:bg-gray-700 px-3 py-2 rounded"
+              >
+                통계
+              </Link>
             {/* <button onClick={handleLogout} className="hover:bg-gray-700 px-3 py-2 rounded text-white"> */}
             <button className="hover:bg-gray-700 px-3 py-2 rounded text-white">
               로그아웃
@@ -81,14 +99,42 @@ const AdminNavbar = () => {
                 onClick={() => setIsOpen(false)}
               >
                 공지사항관리
-              </Link>
-              <Link
-                to="/admin/contacts"
-                className="block hover:bg-gray-700 px-3 py-2 rounded"
-                onClick={() => setIsOpen(false)}
-              >
-                문의관리
-              </Link>
+                </Link>
+                <Link
+                  to="/admin/contacts"
+                  className="block hover:bg-gray-700 px-3 py-2 rounded"
+                  onClick={() => setIsOpen(false)}
+                >
+                  문의관리
+                </Link>
+                <Link
+                  to="/admin/accessCard"
+                  className="block hover:bg-gray-700 px-3 py-2 rounded"
+                  onClick={() => setIsOpen(false)}
+                >
+                  입/출입관리
+                </Link>
+                <Link
+                  to="/admin/cardManagement"
+                  className="block hover:bg-gray-700 px-3 py-2 rounded"
+                  onClick={() => setIsOpen(false)}
+                >
+                  출입카드관리
+                </Link>
+                <Link
+                  to="/admin/statistics"
+                  className="block hover:bg-gray-700 px-3 py-2 rounded"
+                  onClick={() => setIsOpen(false)}
+                >
+                  통계
+                </Link>
+                <Link
+                  to="/statistics"
+                  className="block hover:bg-gray-700 px-3 py-2 rounded"
+                  onClick={() => setIsOpen(false)}
+                >
+                  통계
+                </Link>
               {/* <button onClick={handleLogout} className="block w-full text-left hover:bg-gray-700 px-3 py-2 rounded"> */}
               <button className="block w-full text-left hover:bg-gray-700 px-3 py-2 rounded">
                 로그아웃

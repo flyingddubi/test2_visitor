@@ -7,9 +7,6 @@ const menuItems = [
   { path: "/request", label: "방문 요청" },
   { path: "/notice", label: "공지사항" },
   { path: "/contact", label: "문의하기" },
-  { path: "/approval", label: "승인 관리" },
-  { path: "/badge", label: "출입증 관리" },
-  { path: "/statistics", label: "통계" },
 ];
 
 const MenuItem = ({ path, label, onClick }) => (

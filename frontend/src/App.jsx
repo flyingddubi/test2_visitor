@@ -9,23 +9,23 @@ import {
   createBrowserRouter,
   RouterProvider,
   Outlet,
-  Navigate,
 } from "react-router-dom";
-import axios from "axios";
 
 import MainPage from "./page/MainPage/MainPage";
 import Request from "./page/Request/Request";
 import Notice from "./page/Notice/Notice";
 import NoticeDetail from "./page/Notice/NoticeDetail";
 import Contact from "./page/Contact/Contact";
-import Approval from "./page/Approval/ApprovalList";
-import Badge from "./page/Badge/BadgeManagement";
 import AdminContacts from "./page/Admin/AdminContacts";
-import AdminPosts from "./page/Admin/AdminPosts";
 import AdminNotices from "./page/Admin/AdminNotices";
 import AdminCreatenotice from "./page/Admin/AdminCreatenotice";
 import AdminModifynotice from "./page/Admin/AdminModifynotice";
 import AdminRequests from "./page/Admin/AdminRequests";
+import AdminRequestDetail from "./page/Admin/AdminRequestDetail";
+import AdminAccessCard from "./page/Admin/AdminAccessCard";
+import AdminAccessCardDetail from "./page/Admin/AdminAccessCardDetail";
+import AdminCardManagement from "./page/Admin/AdminCardManagement";
+import AdminStatistics from "./page/Admin/AdminStatistics";
 
 // import AdminLogin from "./page/Admin/AdminLogin";
 // import { useEffect, useState } from "react";
@@ -141,14 +141,6 @@ const router = createBrowserRouter([
         path: "contact",
         element: <Contact />,
       },
-      {
-        path: "approval",
-        element: <Approval />,
-      },
-      {
-        path: "badge",
-        element: <Badge />,
-      },
     ],
   },
   {
@@ -178,6 +170,26 @@ const router = createBrowserRouter([
       {
         path: "requests",
         element: <AdminRequests />,
+      },
+      {
+        path: "detail-request/:id",
+        element: <AdminRequestDetail />,
+      },
+      {
+        path: "accessCard",
+        element: <AdminAccessCard />,
+      },
+      {
+        path: "detail-accessCard/:id",
+        element: <AdminAccessCardDetail />,
+      },
+      {
+        path: "cardManagement",
+        element: <AdminCardManagement />,
+      },
+      {
+        path: "statistics",
+        element: <AdminStatistics />,
       },
     ],
   },

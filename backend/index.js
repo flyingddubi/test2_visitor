@@ -6,13 +6,13 @@ const mysql = require("mysql2/promise");
 const app = express();
 const port = process.env.PORT || 3001;
 
-const visitorRequestRoutes = require("./routes/visitorRequest");
 const approvalRoutes = require("./routes/approval");
-const badgeRoutes = require("./routes/badge");
 const statisticsRoutes = require("./routes/statistics");
 const contactRoutes = require("./routes/contact");
 const noticeRoutes = require("./routes/notice");
 const requestRoutes = require("./routes/request");
+const accessCardRoutes = require("./routes/accessCard");
+const cardManagementRoutes = require("./routes/cardManagement");
 
 app.use(cors({
   origin: "http://localhost:5173",
@@ -24,13 +24,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // 라우트 등록
-app.use("/api/visitorRequest", visitorRequestRoutes);
 app.use("/api/approval", approvalRoutes);
-app.use("/api/badge", badgeRoutes);
 app.use("/api/statistics", statisticsRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/notice", noticeRoutes);
 app.use("/api/request", requestRoutes);
+app.use("/api/accessCard", accessCardRoutes);
+app.use("/api/cardManagement", cardManagementRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

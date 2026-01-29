@@ -23,9 +23,14 @@ const Hero = () => {
                   방문 신청하기
                 </button>
               </Link>
-              <button className="px-8 py-4 bg-white text-blue-600 rounded-lg border-2 border-blue-600  hover:bg-blue-50 transition-colors duration-300 text-lg font-semibold shadow-lg">
+              <a 
+                href="https://www.hanwhasystems.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-white text-blue-600 rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition-colors duration-300 text-lg font-semibold shadow-lg inline-block text-center"
+              >
                 더 알아보기
-              </button>
+              </a>
             </div>
           </div>
           <div className="flex-1 w-full max-w-2xl lg:max-w-none">
